@@ -1,0 +1,66 @@
+﻿<Window
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:wpf="clr-namespace:LibVLCSharp.WPF;assembly=LibVLCSharp.WPF"
+        xmlns:local="clr-namespace:CliClipDotNet"
+        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit" x:Class="CliClipDotNet.MainWindow"
+        mc:Ignorable="d"
+        Title="CliClip" Height="800" Width="1280" AllowDrop="True">
+    <Grid x:Name="mainGrid">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="25"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <StackPanel x:Name="filePanel" VerticalAlignment="Top" Orientation="Horizontal">
+            <Menu x:Name="menu">
+                <MenuItem Header="File">
+                    <MenuItem Header="Open Video" Click="loadVideoButton_Click" />
+                    <MenuItem Header="Quit" Click="MenuItem_Click" />
+                </MenuItem>
+            </Menu>
+            <TextBox x:Name="filePathTextBox" IsReadOnly="True" VerticalContentAlignment="Stretch" Margin="10,0,10,0" Text="No File Loaded"/>
+        </StackPanel>
+        <Grid x:Name="videoEditGrid" Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition MinWidth="60" />
+                <ColumnDefinition Width="5" />
+                <ColumnDefinition Width="4*" MinWidth="240" />
+            </Grid.ColumnDefinitions>
+            <Grid x:Name="videoBitsManagerGrid" MinWidth="80">
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition Height="50"/>
+                </Grid.RowDefinitions>
+                <ListBox x:Name="listBox" Height="100" VerticalAlignment="Top" Width="253">
+                    <StackPanel Orientation="Horizontal">
+                        <Label x:Name="durationLabel" Content="Duration:" Background="Transparent" Padding="0"/>
+                        <TextBlock x:Name="durationTextBlock" TextWrapping="Wrap" Text="00:00"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Label x:Name="framerateLabel" Content="Framerate:" Background="Transparent" Padding="0"/>
+                        <TextBlock x:Name="framerateTextBlock" TextWrapping="Wrap" Text="0"/>
+                    </StackPanel>
+                </ListBox>
+                <StackPanel x:Name="bitsListPanel"/>
+                <Button x:Name="addBitButton" Content="Add selected bit" Grid.Row="1"/>
+            </Grid>
+            <GridSplitter x:Name="gridSplitter" HorizontalAlignment="Stretch" Width="5" Grid.Column="1"/>
+            <Grid x:Name="videoGrid" Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition Height="50"/>
+                </Grid.RowDefinitions>
+                <wpf:VideoView x:Name="videoView" Loaded="videoView_Loaded" MinHeight="480" ScrollViewer.VerticalScrollBarVisibility="Disabled" VerticalContentAlignment="Bottom" MinWidth="240">
+                    <Grid>
+                        <Label x:Name="noVideoLabel" Content="No video loaded" VerticalAlignment="Center" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="24"/>
+                    </Grid>
+                </wpf:VideoView>
+                <Grid x:Name="videoControlsGrid" Grid.Row="1">
+                    <xctk:RangeSlider x:Name="videoBitRangeSlider" VerticalContentAlignment="Center" Maximum="1" HigherValue="1" Step="0.01" Foreground="{x:Null}" BorderBrush="Black" RangeBackground="#33000000" VerticalAlignment="Center" TickPlacement="TopLeft" HigherValueChanged="videoBitRangeSlider_HigherValueChanged" LowerValueChanged="videoBitRangeSlider_LowerValueChanged"/>
+                </Grid>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>
