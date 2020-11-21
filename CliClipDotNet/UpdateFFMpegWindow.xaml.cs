@@ -30,9 +30,9 @@ namespace CliClipDotNet
 
         async private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            FFmpeg.SetExecutablesPath(App.ffmpegDirectory);
-            if (Directory.Exists(App.ffmpegDirectory) == false)
-                Directory.CreateDirectory(App.ffmpegDirectory);
+            FFmpeg.SetExecutablesPath(App.Settings.ffmpegDirectory);
+            if (Directory.Exists(App.Settings.ffmpegDirectory) == false)
+                Directory.CreateDirectory(App.Settings.ffmpegDirectory);
 
             var progressFunc = new Progress<ProgressInfo>(info =>
            {
@@ -41,7 +41,7 @@ namespace CliClipDotNet
                updateProgressBar.Value = progressPercent;
            });
 
-            await FFmpegDownloader.GetLatestVersion(FFmpegVersion.Full, App.ffmpegDirectory, progressFunc);
+            await FFmpegDownloader.GetLatestVersion(FFmpegVersion.Full, App.Settings.ffmpegDirectory, progressFunc);
             this.Close();
         }
     }
