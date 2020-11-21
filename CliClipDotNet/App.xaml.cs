@@ -11,7 +11,7 @@ using System.IO;
 using LibVLCSharp.Shared;
 using Xabe.FFmpeg;
 
-namespace CliClipDotNet
+namespace CliClip
 {
     /// <summary>
     /// Interaction logic for App.xaml

@@ -16,7 +16,7 @@ using System.IO;
 using Xabe.FFmpeg;
 using Xabe.FFmpeg.Downloader;
 
-namespace CliClipDotNet
+namespace CliClip
 {
     /// <summary>
     /// Interaction logic for UpdateFFMpegWindow.xaml

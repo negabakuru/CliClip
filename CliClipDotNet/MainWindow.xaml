@@ -4,8 +4,8 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:wpf="clr-namespace:LibVLCSharp.WPF;assembly=LibVLCSharp.WPF"
-        xmlns:local="clr-namespace:CliClipDotNet"
-        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit" x:Class="CliClipDotNet.MainWindow"
+        xmlns:local="clr-namespace:CliClip"
+        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit" x:Class="CliClip.MainWindow"
         mc:Ignorable="d"
         Title="CliClip" Height="800" Width="1280" AllowDrop="True" Drop="Window_Drop" DragOver="Window_DragOver">
     <Grid x:Name="mainGrid">
@@ -34,10 +34,11 @@
             </Grid.ColumnDefinitions>
             <Grid x:Name="videoBitsManagerGrid" MinWidth="80">
                 <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition/>
                     <RowDefinition Height="50"/>
                 </Grid.RowDefinitions>
-                <ListBox x:Name="listBox" Height="100" VerticalAlignment="Top" Width="253">
+                <ListBox x:Name="listBox" VerticalAlignment="Top">
                     <StackPanel Orientation="Horizontal">
                         <Label x:Name="durationLabel" Content="Duration:" Background="Transparent" Padding="0"/>
                         <TextBlock x:Name="durationTextBlock" TextWrapping="Wrap" Text="00:00"/>
@@ -47,8 +48,19 @@
                         <TextBlock x:Name="framerateTextBlock" TextWrapping="Wrap" Text="0"/>
                     </StackPanel>
                 </ListBox>
-                <StackPanel x:Name="bitsListPanel"/>
-                <Button x:Name="addBitButton" Content="Add selected bit" Grid.Row="1"/>
+                <ItemsControl x:Name="bitItemsControl" Grid.Row="1">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel CanVerticallyScroll="True" ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <local:VideoBitItem></local:VideoBitItem>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <Button x:Name="addBitButton" Content="Add selected bit" Grid.Row="2" Click="addBitButton_Click"/>
             </Grid>
             <GridSplitter x:Name="gridSplitter" HorizontalAlignment="Stretch" Width="5" Grid.Column="1"/>
             <Grid x:Name="videoGrid" Grid.Column="2">
@@ -76,7 +88,9 @@
                         <TextBlock TextWrapping="Wrap" Text="Mute" Margin="9,0,3,0" VerticalAlignment="Center"/>
                         <CheckBox x:Name="muteCheckBox" Content="" VerticalContentAlignment="Center" Click="muteCheckBox_Click" Margin="3,0" VerticalAlignment="Center"/>
                     </StackPanel>
+                    <Slider x:Name="videoPlaybackSlider" Margin="0" Background="{x:Null}" BorderBrush="{x:Null}" Grid.Row="1" Maximum="1" SmallChange="0.01" Focusable="False"/>
                     <xctk:RangeSlider x:Name="videoBitRangeSlider" VerticalContentAlignment="Center" Maximum="1" HigherValue="1" Step="0.01" Foreground="{x:Null}" BorderBrush="Black" RangeBackground="#33000000" VerticalAlignment="Center" TickPlacement="TopLeft" HigherValueChanged="videoBitRangeSlider_HigherValueChanged" LowerValueChanged="videoBitRangeSlider_LowerValueChanged" Grid.Row="1"/>
+                    <xctk:PropertyItemsControl HorizontalAlignment="Left" Height="65" Margin="216,22,0,-55" Grid.Row="1" VerticalAlignment="Top" Width="100"/>
                 </Grid>
             </Grid>
         </Grid>

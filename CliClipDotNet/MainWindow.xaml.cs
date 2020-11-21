@@ -6,7 +6,7 @@ using System.IO;
 using System.Collections.ObjectModel;
 using System.Threading;
 
-namespace CliClipDotNet
+namespace CliClip
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -33,6 +33,8 @@ namespace CliClipDotNet
         // List of subtitle tracks for the currently played media
         protected ObservableCollection<MediaTrackComboBoxItem> playingMediaSubtitleTracks = new ObservableCollection<MediaTrackComboBoxItem> { new MediaTrackComboBoxItem { displayString = "None", isNull = true } };
 
+        protected ObservableCollection<VideoBitItem> bitList = new ObservableCollection<VideoBitItem>();
+
 
         public MainWindow()
         {
@@ -42,6 +44,10 @@ namespace CliClipDotNet
         private void videoView_Loaded(object sender, RoutedEventArgs e)
         {
             mediaPlayer = new MediaPlayer(App.VLC);
+            mediaPlayer.Playing += MediaPlayer_Playing;
+            mediaPlayer.PositionChanged += MediaPlayer_PositionChanged;
+
+            bitItemsControl.ItemsSource = bitList;
 
             videoView.MediaPlayer = mediaPlayer;
 
@@ -50,6 +56,17 @@ namespace CliClipDotNet
 
             audioTrackComboBox.ItemsSource = playingMediaAudioTracks;
             subtitleTrackComboBox.ItemsSource = playingMediaSubtitleTracks;
+        }
+
+       private void MediaPlayer_PositionChanged(object sender, MediaPlayerPositionChangedEventArgs e)
+        {
+            this.Dispatcher.Invoke(() =>
+            {
+                if (mediaPlayer != null && playingMedia != null)
+                {
+                    videoPlaybackSlider.Value = e.Position * (Convert.ToDouble(playingMedia.Duration) * 0.001);
+                }
+            });
         }
 
         private void MenuItem_Click(object sender, RoutedEventArgs e)
@@ -89,6 +106,7 @@ namespace CliClipDotNet
             videoBitRangeSlider.Maximum = newVideo.Duration * 0.001; // set slider to duration in seconds
             videoBitRangeSlider.HigherValue = videoBitRangeSlider.Maximum;
             videoBitRangeSlider.LowerValue = 0.0;
+            videoPlaybackSlider.Maximum = videoBitRangeSlider.Maximum;
 
             // Compute framerate from video track data
             if (playingMedia.Tracks.Length > 0 && playingMedia.Tracks[0].TrackType == TrackType.Video)
@@ -199,6 +217,17 @@ namespace CliClipDotNet
             }
         }
 
+        private void MediaPlayer_Playing(object sender, EventArgs e)
+        {
+            // switch to UI thread
+            this.Dispatcher.Invoke(() =>
+            {
+                // selected tracks are reset by media player so we set them to the selected ones as if we received a change from the UI
+                audioTrackComboBox_SelectionChanged(null, null);
+                subtitleTrackComboBox_SelectionChanged(null, null);
+            });
+        }
+
         private void Window_Drop(object sender, System.Windows.DragEventArgs e)
         {
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
@@ -258,7 +287,7 @@ namespace CliClipDotNet
             if (mediaPlayer != null)
             {
                 MediaTrackComboBoxItem selectedItem = (MediaTrackComboBoxItem)audioTrackComboBox.SelectedItem;
-                if (!selectedItem.isNull)
+                if (selectedItem != null && !selectedItem.isNull)
                     mediaPlayer.SetAudioTrack(selectedItem.track.Id);
                 else
                     mediaPlayer.SetAudioTrack(-1);
@@ -270,11 +299,29 @@ namespace CliClipDotNet
             if (mediaPlayer != null)
             {
                 MediaTrackComboBoxItem selectedItem = (MediaTrackComboBoxItem)subtitleTrackComboBox.SelectedItem;
-                if (!selectedItem.isNull)
+                if (selectedItem != null && !selectedItem.isNull)
                     mediaPlayer.SetSpu(selectedItem.track.Id);
                 else
                     mediaPlayer.SetSpu(-1);
             }
+        }
+
+        private void addBitButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Add current selected video bit to the list of bits to process
+            if (mediaPlayer != null && playingMedia != null)
+            {
+                bitList.Add(new VideoBitItem(
+                    baseMedia,
+                    videoBitRangeSlider.LowerValue,
+                    videoBitRangeSlider.HigherValue,
+                    playRateBox.Value.HasValue ? playRateBox.Value.Value : 1.0M,
+                    ((MediaTrackComboBoxItem)audioTrackComboBox.SelectedItem).isNull ? null : (MediaTrack?)((MediaTrackComboBoxItem)audioTrackComboBox.SelectedItem).track,
+                    muteCheckBox.IsChecked.HasValue ? muteCheckBox.IsChecked.Value : false,
+                    ((MediaTrackComboBoxItem)subtitleTrackComboBox.SelectedItem).isNull ? null : (MediaTrack?)((MediaTrackComboBoxItem)subtitleTrackComboBox.SelectedItem).track));
+            }
+            else
+                System.Windows.MessageBox.Show("Cannot add a bit from the current media");
         }
     }
 }

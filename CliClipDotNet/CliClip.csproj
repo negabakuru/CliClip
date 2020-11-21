@@ -53,7 +53,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <StartupObject>CliClipDotNet.App</StartupObject>
+    <StartupObject>CliClip.App</StartupObject>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="LibVLCSharp, Version=3.4.9.0, Culture=neutral, processorArchitecture=MSIL">
@@ -123,6 +123,9 @@
     <Compile Include="UpdateFFMpegWindow.xaml.cs">
       <DependentUpon>UpdateFFMpegWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="VideoBitItem.xaml.cs">
+      <DependentUpon>VideoBitItem.xaml</DependentUpon>
+    </Compile>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -136,6 +139,10 @@
       <SubType>Code</SubType>
     </Compile>
     <Page Include="UpdateFFMpegWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="VideoBitItem.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
