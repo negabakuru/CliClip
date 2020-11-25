@@ -5,15 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 using LibVLCSharp.Shared;
+using System.Collections.ObjectModel;
 
 namespace CliClip
 {
@@ -22,6 +16,8 @@ namespace CliClip
     /// </summary>
     public partial class VideoBitItem : UserControl
     {
+        // List containing all VideoBitItem items
+        ObservableCollection<VideoBitItem> bitList;
         // Bit start time in seconds
         protected double startTime = 0.0;
         // Bit end time in seconds
@@ -31,8 +27,8 @@ namespace CliClip
         {
             get
             {
-                string startString = new TimeSpan(0, 0, 0, 0, Convert.ToInt32(startTime * 1000.0)).ToString();
-                string endString = new TimeSpan(0, 0, 0, 0, Convert.ToInt32(endTime * 1000.0)).ToString();
+                string startString = new TimeSpan(0, 0, 0, 0, Convert.ToInt32(startTime * 1000.0)).ToString(@"hh\:mm\:ss\.fff");
+                string endString = new TimeSpan(0, 0, 0, 0, Convert.ToInt32(endTime * 1000.0)).ToString(@"hh\:mm\:ss\.fff");
                 return $"[{startString} - {endString}]";
             }
         }
@@ -47,11 +43,12 @@ namespace CliClip
             InitializeComponent();
         }
 
-        public VideoBitItem(Media source, double start, double end, decimal playrate, MediaTrack? audio, bool mute, MediaTrack? subtitles)
+        public VideoBitItem(ObservableCollection<VideoBitItem> list, Media source, double start, double end, decimal playrate, MediaTrack? audio, bool mute, MediaTrack? subtitles)
         {
             InitializeComponent();
 
             // Init members
+            bitList = list;
             startTime = start;
             endTime = end;
             media = source.Duplicate();
@@ -83,6 +80,12 @@ namespace CliClip
                 subtitleTrackText.Text = $"{subtitleTrack.Value.Id} [{subtitleTrack.Value.Language}] {subtitleTrack.Value.Description}";
             else
                 subtitleTrackText.Text = "None";
+        }
+
+        private void button_Click(object sender, RoutedEventArgs e)
+        {
+            if (bitList != null)
+                bitList.Remove(this);
         }
     }
 }

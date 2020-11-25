@@ -4,7 +4,7 @@ using System.Windows;
 using LibVLCSharp.Shared;
 using System.IO;
 using System.Collections.ObjectModel;
-using System.Threading;
+using System.Threading.Tasks;
 
 namespace CliClip
 {
@@ -35,10 +35,18 @@ namespace CliClip
 
         protected ObservableCollection<VideoBitItem> bitList = new ObservableCollection<VideoBitItem>();
 
+        bool wasPlayingBeforeSeek = false;
+        double bitSeekStartTime = 0.0;
+        double bitSeekEndTime = 0.0;
+        double lastSeekTime = 0.0;
 
         public MainWindow()
         {
             InitializeComponent();
+
+            Style s = new Style();
+            s.Setters.Add(new Setter(UIElement.VisibilityProperty, Visibility.Collapsed));
+            tabControl.ItemContainerStyle = s;
         }
 
         private void videoView_Loaded(object sender, RoutedEventArgs e)
@@ -46,6 +54,7 @@ namespace CliClip
             mediaPlayer = new MediaPlayer(App.VLC);
             mediaPlayer.Playing += MediaPlayer_Playing;
             mediaPlayer.PositionChanged += MediaPlayer_PositionChanged;
+            mediaPlayer.EnableHardwareDecoding = true;
 
             bitItemsControl.ItemsSource = bitList;
 
@@ -58,20 +67,63 @@ namespace CliClip
             subtitleTrackComboBox.ItemsSource = playingMediaSubtitleTracks;
         }
 
-       private void MediaPlayer_PositionChanged(object sender, MediaPlayerPositionChangedEventArgs e)
-        {
-            this.Dispatcher.Invoke(() =>
-            {
-                if (mediaPlayer != null && playingMedia != null)
-                {
-                    videoPlaybackSlider.Value = e.Position * (Convert.ToDouble(playingMedia.Duration) * 0.001);
-                }
-            });
-        }
-
         private void MenuItem_Click(object sender, RoutedEventArgs e)
         {
             App.Current.Shutdown();
+        }
+
+        private void autoUpdateFfmpegCheckbox_Click(object sender, RoutedEventArgs e)
+        {
+            if (App.Settings != null)
+            {
+                App.Settings.autoUpdateFfmpeg = autoUpdateFfmpegCheckbox.IsEnabled;
+                App.SaveSettings();
+            }
+        }
+
+        private void setFfmpegFolderMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            System.Windows.Forms.FolderBrowserDialog dialog = new System.Windows.Forms.FolderBrowserDialog();
+            dialog.SelectedPath = App.Settings.ffmpegDirectory;
+            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                App.Settings.ffmpegDirectory = dialog.SelectedPath;
+                App.SaveSettings();
+                setFfmpegFolderMenuItem.ToolTip = App.Settings.ffmpegDirectory;
+            }
+        }
+
+        private void Window_Drop(object sender, System.Windows.DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                LoadMediaFromPath(files[0]);
+                LoadNewVideo(baseMedia);
+                e.Handled = true;
+            }
+        }
+
+        private void Window_DragOver(object sender, DragEventArgs e)
+        {
+            bool dropEnabled = false;
+            // Block drag and drop for unauthorized file extentions
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                string fileExtention = Path.GetExtension(files[0]).ToLower();
+                foreach (string ext in MainWindow.allowedExtensions)
+                {
+                    if (fileExtention == ext)
+                        dropEnabled = true;
+                }
+            }
+
+            if (!dropEnabled)
+            {
+                e.Effects = DragDropEffects.None;
+                e.Handled = true;
+            }
         }
 
         public bool LoadMediaFromPath(string mediaPath)
@@ -182,106 +234,6 @@ namespace CliClip
             }
         }
 
-        private void muteCheckBox_Click(object sender, RoutedEventArgs e)
-        {
-            if (mediaPlayer != null)
-                mediaPlayer.Mute = muteCheckBox.IsChecked.HasValue ? muteCheckBox.IsChecked.Value : false;
-        }
-
-        private void playRateBox_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
-        {
-            if (mediaPlayer != null)
-            {
-                if (playRateBox.Value.HasValue)
-                    mediaPlayer.SetRate((float)playRateBox.Value.Value);
-                else
-                    playRateBox.Value = (decimal)mediaPlayer.Rate;
-            }
-        }
-
-        private void videoBitRangeSlider_HigherValueChanged(object sender, RoutedEventArgs e)
-        {
-            if (playingMedia != null)
-            {
-                playingMedia.AddOption($"stop-time={videoBitRangeSlider.HigherValue}");
-                mediaPlayer.Play(playingMedia);
-            }
-        }
-
-        private void videoBitRangeSlider_LowerValueChanged(object sender, RoutedEventArgs e)
-        {
-            if (playingMedia != null)
-            {
-                playingMedia.AddOption($"start-time={videoBitRangeSlider.LowerValue}");
-                mediaPlayer.Play(playingMedia);
-            }
-        }
-
-        private void MediaPlayer_Playing(object sender, EventArgs e)
-        {
-            // switch to UI thread
-            this.Dispatcher.Invoke(() =>
-            {
-                // selected tracks are reset by media player so we set them to the selected ones as if we received a change from the UI
-                audioTrackComboBox_SelectionChanged(null, null);
-                subtitleTrackComboBox_SelectionChanged(null, null);
-            });
-        }
-
-        private void Window_Drop(object sender, System.Windows.DragEventArgs e)
-        {
-            if (e.Data.GetDataPresent(DataFormats.FileDrop))
-            {
-                string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
-                LoadMediaFromPath(files[0]);
-                LoadNewVideo(baseMedia);
-                e.Handled = true;
-            }
-        }
-
-        private void Window_DragOver(object sender, DragEventArgs e)
-        {
-            bool dropEnabled = false;
-            // Block drag and drop for unauthorized file extentions
-            if (e.Data.GetDataPresent(DataFormats.FileDrop))
-            {
-                string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
-                string fileExtention = Path.GetExtension(files[0]).ToLower();
-                foreach (string ext in MainWindow.allowedExtensions)
-                {
-                    if (fileExtention == ext)
-                        dropEnabled = true;
-                }
-            }
-
-            if (!dropEnabled)
-            {
-                e.Effects = DragDropEffects.None;
-                e.Handled = true;
-            }
-        }
-
-        private void autoUpdateFfmpegCheckbox_Click(object sender, RoutedEventArgs e)
-        {
-            if (App.Settings != null)
-            {
-                App.Settings.autoUpdateFfmpeg = autoUpdateFfmpegCheckbox.IsEnabled;
-                App.SaveSettings();
-            }
-        }
-
-        private void setFfmpegFolderMenuItem_Click(object sender, RoutedEventArgs e)
-        {
-            System.Windows.Forms.FolderBrowserDialog dialog = new System.Windows.Forms.FolderBrowserDialog();
-            dialog.SelectedPath = App.Settings.ffmpegDirectory;
-            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-            {
-                App.Settings.ffmpegDirectory = dialog.SelectedPath;
-                App.SaveSettings();
-                setFfmpegFolderMenuItem.ToolTip = App.Settings.ffmpegDirectory;
-            }
-        }
-
         private void audioTrackComboBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
             if (mediaPlayer != null)
@@ -306,12 +258,41 @@ namespace CliClip
             }
         }
 
+        private void MediaPlayer_Playing(object sender, EventArgs e)
+        {
+            // switch to UI thread
+            this.Dispatcher.Invoke(() =>
+            {
+                // selected tracks are reset by media player so we set them to the selected ones as if we received a change from the UI
+                audioTrackComboBox_SelectionChanged(null, null);
+                subtitleTrackComboBox_SelectionChanged(null, null);
+            });
+        }
+
+        private void muteCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            if (mediaPlayer != null)
+                mediaPlayer.Mute = muteCheckBox.IsChecked.HasValue ? muteCheckBox.IsChecked.Value : false;
+        }
+
+        private void playRateBox_ValueChanged(object sender, RoutedPropertyChangedEventArgs<object> e)
+        {
+            if (mediaPlayer != null)
+            {
+                if (playRateBox.Value.HasValue)
+                    mediaPlayer.SetRate((float)playRateBox.Value.Value);
+                else
+                    playRateBox.Value = (decimal)mediaPlayer.Rate;
+            }
+        }
+
         private void addBitButton_Click(object sender, RoutedEventArgs e)
         {
             // Add current selected video bit to the list of bits to process
             if (mediaPlayer != null && playingMedia != null)
             {
                 bitList.Add(new VideoBitItem(
+                    bitList,
                     baseMedia,
                     videoBitRangeSlider.LowerValue,
                     videoBitRangeSlider.HigherValue,
@@ -322,6 +303,81 @@ namespace CliClip
             }
             else
                 System.Windows.MessageBox.Show("Cannot add a bit from the current media");
+        }
+
+        private void videoBitRangeSlider_HigherValueChanged(object sender, RoutedEventArgs e)
+        {
+            if (playingMedia != null && mediaPlayer != null)
+            {
+                // Save new value to set end time on drag completed
+                bitSeekEndTime = videoBitRangeSlider.HigherValue;
+                lastSeekTime = bitSeekEndTime;
+                // Seek to corresponding time
+                mediaPlayer.Time = Convert.ToInt64(videoBitRangeSlider.HigherValue * 1000.0);
+            }
+        }
+
+        private void videoBitRangeSlider_LowerValueChanged(object sender, RoutedEventArgs e)
+        {
+            if (playingMedia != null && mediaPlayer != null)
+            {
+                // Save new value to set start time on drag completed
+                bitSeekStartTime = videoBitRangeSlider.LowerValue;
+                lastSeekTime = bitSeekStartTime;
+                // Seek to corresponding time
+                mediaPlayer.Time = Convert.ToInt64(videoBitRangeSlider.LowerValue * 1000.0);
+            }
+        }
+
+        private void videoBitRangeSlider_DragStarted(object sender, System.Windows.Controls.Primitives.DragStartedEventArgs e)
+        {
+            if (mediaPlayer != null)
+            {
+                wasPlayingBeforeSeek = mediaPlayer.IsPlaying;
+                mediaPlayer.SetPause(true);
+            }
+        }
+
+        private void videoBitRangeSlider_DragCompleted(object sender, System.Windows.Controls.Primitives.DragCompletedEventArgs e)
+        {
+            if (mediaPlayer != null && playingMedia != null)
+            {
+                playingMedia.AddOption("input-repeat=65535");
+                // Set vlc playback start time to lower value on range slide
+                playingMedia.AddOption($"start-time={bitSeekStartTime}");
+                // Set vlc playback end time to higher value on range slide
+                playingMedia.AddOption($"stop-time={bitSeekEndTime}");
+
+                //if (wasPlayingBeforeSeek)
+                //    mediaPlayer.SetPause(false);
+                mediaPlayer.Play(playingMedia);
+
+                mediaPlayer.Position = Convert.ToInt64(lastSeekTime * 1000.0);
+
+                wasPlayingBeforeSeek = false;
+            }
+        }
+
+        private void MediaPlayer_PositionChanged(object sender, MediaPlayerPositionChangedEventArgs e)
+        {
+            try
+            {
+                this.Dispatcher.Invoke(() =>
+                {
+                    if (mediaPlayer != null && playingMedia != null)
+                    {
+                        videoPlaybackSlider.Value = e.Position * (Convert.ToDouble(playingMedia.Duration) * 0.001);
+                    }
+                });
+            }
+            catch (TaskCanceledException ex)
+            {
+                // catch exception because it can be thrown when exiting program
+            }
+        }
+
+        private void RemoveBitCommand_Executed(object sender, RoutedEventArgs e)
+        {
         }
     }
 }

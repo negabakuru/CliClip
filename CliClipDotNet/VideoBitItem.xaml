@@ -6,26 +6,33 @@
              xmlns:local="clr-namespace:CliClip"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
-    <Expander x:Name="expander" Header="Expander" VerticalAlignment="Top">
-        <Grid Background="#FFE5E5E5">
-            <StackPanel>
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock x:Name="textBlock" TextWrapping="Wrap" Text="Audio: "/>
-                    <TextBlock x:Name="audioTrackText" TextWrapping="Wrap" Text="TextBlock"/>
+    <Grid Margin="0" >
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition/>
+            <ColumnDefinition Width="20"/>
+        </Grid.ColumnDefinitions>
+        <Expander x:Name="expander" Header="Expander" VerticalAlignment="Top" Margin="0" Grid.ColumnSpan="2">
+            <Grid Background="#FFE5E5E5">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock x:Name="textBlock" TextWrapping="Wrap" Text="Audio: "/>
+                        <TextBlock x:Name="audioTrackText" TextWrapping="Wrap" Text="TextBlock"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock x:Name="textBlock2" TextWrapping="Wrap" Text="Subtitles: "/>
+                        <TextBlock x:Name="subtitleTrackText" TextWrapping="Wrap" Text="TextBlock"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock x:Name="textBlock4" TextWrapping="Wrap" Text="Speed: "/>
+                        <TextBlock x:Name="playrateText" TextWrapping="Wrap" Text="TextBlock"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock x:Name="textBlock6" TextWrapping="Wrap" Text="Muted: "/>
+                        <TextBlock x:Name="mutedText" TextWrapping="Wrap" Text="TextBlock"/>
+                    </StackPanel>
                 </StackPanel>
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock x:Name="textBlock2" TextWrapping="Wrap" Text="Subtitles: "/>
-                    <TextBlock x:Name="subtitleTrackText" TextWrapping="Wrap" Text="TextBlock"/>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock x:Name="textBlock4" TextWrapping="Wrap" Text="Rate: "/>
-                    <TextBlock x:Name="playrateText" TextWrapping="Wrap" Text="TextBlock"/>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock x:Name="textBlock6" TextWrapping="Wrap" Text="Muted: "/>
-                    <TextBlock x:Name="mutedText" TextWrapping="Wrap" Text="TextBlock"/>
-                </StackPanel>
-            </StackPanel>
-        </Grid>
-    </Expander>
+            </Grid>
+        </Expander>
+        <Button x:Name="button" Content="X" HorizontalAlignment="Right" VerticalAlignment="Top" HorizontalContentAlignment="Center" Click="button_Click" MinWidth="20" Margin="0" Grid.Column="1"/>
+    </Grid>
 </UserControl>

@@ -8,6 +8,15 @@
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit" x:Class="CliClip.MainWindow"
         mc:Ignorable="d"
         Title="CliClip" Height="800" Width="1280" AllowDrop="True" Drop="Window_Drop" DragOver="Window_DragOver">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/CliClip;component/SliderStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
     <Grid x:Name="mainGrid">
         <Grid.RowDefinitions>
             <RowDefinition Height="25"/>
@@ -26,73 +35,81 @@
             </Menu>
             <TextBox x:Name="filePathTextBox" IsReadOnly="True" VerticalContentAlignment="Stretch" Margin="10,0,10,0" Text="No File Loaded"/>
         </StackPanel>
-        <Grid x:Name="videoEditGrid" Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition MinWidth="60" />
-                <ColumnDefinition Width="5" />
-                <ColumnDefinition Width="4*" MinWidth="240" />
-            </Grid.ColumnDefinitions>
-            <Grid x:Name="videoBitsManagerGrid" MinWidth="80">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition/>
-                    <RowDefinition Height="50"/>
-                </Grid.RowDefinitions>
-                <ListBox x:Name="listBox" VerticalAlignment="Top">
-                    <StackPanel Orientation="Horizontal">
-                        <Label x:Name="durationLabel" Content="Duration:" Background="Transparent" Padding="0"/>
-                        <TextBlock x:Name="durationTextBlock" TextWrapping="Wrap" Text="00:00"/>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal">
-                        <Label x:Name="framerateLabel" Content="Framerate:" Background="Transparent" Padding="0"/>
-                        <TextBlock x:Name="framerateTextBlock" TextWrapping="Wrap" Text="0"/>
-                    </StackPanel>
-                </ListBox>
-                <ItemsControl x:Name="bitItemsControl" Grid.Row="1">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <StackPanel CanVerticallyScroll="True" ScrollViewer.VerticalScrollBarVisibility="Auto"/>
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <local:VideoBitItem></local:VideoBitItem>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-                <Button x:Name="addBitButton" Content="Add selected bit" Grid.Row="2" Click="addBitButton_Click"/>
-            </Grid>
-            <GridSplitter x:Name="gridSplitter" HorizontalAlignment="Stretch" Width="5" Grid.Column="1"/>
-            <Grid x:Name="videoGrid" Grid.Column="2">
-                <Grid.RowDefinitions>
-                    <RowDefinition/>
-                    <RowDefinition Height="65"/>
-                </Grid.RowDefinitions>
-                <wpf:VideoView x:Name="videoView" Loaded="videoView_Loaded" MinHeight="480" ScrollViewer.VerticalScrollBarVisibility="Disabled" VerticalContentAlignment="Bottom" MinWidth="240">
-                    <Grid>
-                        <Label x:Name="noVideoLabel" Content="No video loaded" VerticalAlignment="Center" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="24"/>
+        <TabControl x:Name="tabControl" Grid.RowSpan="2" Grid.Row="1" Padding="0">
+            <TabItem Header="" Width="0" Height="0" Margin="0" Padding="0" >
+                <Grid x:Name="videoEditGrid" Margin="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition MinWidth="60" />
+                        <ColumnDefinition Width="5" />
+                        <ColumnDefinition Width="4*" MinWidth="240" />
+                    </Grid.ColumnDefinitions>
+                    <Grid x:Name="videoBitsManagerGrid" MinWidth="80">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition/>
+                            <RowDefinition Height="50"/>
+                        </Grid.RowDefinitions>
+                        <ListBox x:Name="listBox" VerticalAlignment="Top">
+                            <StackPanel Orientation="Horizontal">
+                                <Label x:Name="durationLabel" Content="Duration:" Background="Transparent" Padding="0"/>
+                                <TextBlock x:Name="durationTextBlock" TextWrapping="Wrap" Text="00:00"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Label x:Name="framerateLabel" Content="Framerate:" Background="Transparent" Padding="0"/>
+                                <TextBlock x:Name="framerateTextBlock" TextWrapping="Wrap" Text="0"/>
+                            </StackPanel>
+                        </ListBox>
+                        <ItemsControl x:Name="bitItemsControl" Grid.Row="1">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel CanVerticallyScroll="True" ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <local:VideoBitItem/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <Button x:Name="addBitButton" Content="Add selected bit" Grid.Row="2" Click="addBitButton_Click"/>
                     </Grid>
-                </wpf:VideoView>
-                <Grid x:Name="videoControlsGrid" Grid.Row="1">
-                    <Grid.RowDefinitions>
-                        <RowDefinition/>
-                        <RowDefinition/>
-                    </Grid.RowDefinitions>
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock TextWrapping="Wrap" Text="Audio Track" Margin="3,0" VerticalAlignment="Center"/>
-                        <ComboBox x:Name="audioTrackComboBox" MinWidth="200" Margin="3,5" VerticalContentAlignment="Center" VerticalAlignment="Center" SelectionChanged="audioTrackComboBox_SelectionChanged" DisplayMemberPath="displayString"/>
-                        <TextBlock TextWrapping="Wrap" Text="Subtitles" Margin="9,0,3,0" VerticalAlignment="Center"/>
-                        <ComboBox x:Name="subtitleTrackComboBox" MinWidth="200" Margin="3,5" VerticalAlignment="Center" SelectionChanged="subtitleTrackComboBox_SelectionChanged" DisplayMemberPath="displayString"/>
-                        <TextBlock TextWrapping="Wrap" Text="Play Rate" Margin="9,0,3,0" VerticalAlignment="Center"/>
-                        <xctk:DecimalUpDown x:Name="playRateBox" Maximum="4" Minimum="0.25" ParsingNumberStyle="Float" Value="1.0" Increment="0.25" ValueChanged="playRateBox_ValueChanged" Margin="3,0" VerticalAlignment="Center"/>
-                        <TextBlock TextWrapping="Wrap" Text="Mute" Margin="9,0,3,0" VerticalAlignment="Center"/>
-                        <CheckBox x:Name="muteCheckBox" Content="" VerticalContentAlignment="Center" Click="muteCheckBox_Click" Margin="3,0" VerticalAlignment="Center"/>
-                    </StackPanel>
-                    <Slider x:Name="videoPlaybackSlider" Margin="0" Background="{x:Null}" BorderBrush="{x:Null}" Grid.Row="1" Maximum="1" SmallChange="0.01" Focusable="False"/>
-                    <xctk:RangeSlider x:Name="videoBitRangeSlider" VerticalContentAlignment="Center" Maximum="1" HigherValue="1" Step="0.01" Foreground="{x:Null}" BorderBrush="Black" RangeBackground="#33000000" VerticalAlignment="Center" TickPlacement="TopLeft" HigherValueChanged="videoBitRangeSlider_HigherValueChanged" LowerValueChanged="videoBitRangeSlider_LowerValueChanged" Grid.Row="1"/>
-                    <xctk:PropertyItemsControl HorizontalAlignment="Left" Height="65" Margin="216,22,0,-55" Grid.Row="1" VerticalAlignment="Top" Width="100"/>
+                    <GridSplitter x:Name="gridSplitter" HorizontalAlignment="Stretch" Width="5" Grid.Column="1"/>
+                    <Grid x:Name="videoGrid" Grid.Column="2">
+                        <Grid.RowDefinitions>
+                            <RowDefinition/>
+                            <RowDefinition Height="65"/>
+                        </Grid.RowDefinitions>
+                        <wpf:VideoView x:Name="videoView" Loaded="videoView_Loaded" MinHeight="480" ScrollViewer.VerticalScrollBarVisibility="Disabled" VerticalContentAlignment="Bottom" MinWidth="240">
+                            <Grid>
+                                <Label x:Name="noVideoLabel" Content="No video loaded" VerticalAlignment="Center" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" FontSize="24"/>
+                            </Grid>
+                        </wpf:VideoView>
+                        <Grid x:Name="videoControlsGrid" Grid.Row="1">
+                            <Grid.RowDefinitions>
+                                <RowDefinition/>
+                                <RowDefinition/>
+                            </Grid.RowDefinitions>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock TextWrapping="Wrap" Text="Audio Track" Margin="3,0" VerticalAlignment="Center"/>
+                                <ComboBox x:Name="audioTrackComboBox" MinWidth="200" Margin="3,5" VerticalContentAlignment="Center" VerticalAlignment="Center" SelectionChanged="audioTrackComboBox_SelectionChanged" DisplayMemberPath="displayString"/>
+                                <TextBlock TextWrapping="Wrap" Text="Subtitles" Margin="9,0,3,0" VerticalAlignment="Center"/>
+                                <ComboBox x:Name="subtitleTrackComboBox" MinWidth="200" Margin="3,5" VerticalAlignment="Center" SelectionChanged="subtitleTrackComboBox_SelectionChanged" DisplayMemberPath="displayString"/>
+                                <TextBlock TextWrapping="Wrap" Text="Speed" Margin="9,0,3,0" VerticalAlignment="Center"/>
+                                <xctk:DecimalUpDown x:Name="playRateBox" Maximum="4" Minimum="0.25" ParsingNumberStyle="Float" Value="1.0" Increment="0.25" ValueChanged="playRateBox_ValueChanged" Margin="3,0" VerticalAlignment="Center"/>
+                                <TextBlock TextWrapping="Wrap" Text="Mute" Margin="9,0,3,0" VerticalAlignment="Center"/>
+                                <CheckBox x:Name="muteCheckBox" Content="" VerticalContentAlignment="Center" Click="muteCheckBox_Click" Margin="3,0" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <Slider x:Name="videoPlaybackSlider" Margin="0,-3,0,0" Background="{x:Null}" BorderBrush="{x:Null}" Grid.Row="1" Maximum="1" SmallChange="0.01" Focusable="False" Value="0.25" VerticalContentAlignment="Center" Style="{DynamicResource SliderStyle1}" HorizontalContentAlignment="Center" AutoToolTipPlacement="TopLeft" AutoToolTipPrecision="3"/>
+                            <xctk:RangeSlider Thumb.DragStarted="videoBitRangeSlider_DragStarted" Thumb.DragCompleted="videoBitRangeSlider_DragCompleted" x:Name="videoBitRangeSlider" VerticalContentAlignment="Center" Maximum="1" Step="0.01" RangeBackground="#330051FF" TickPlacement="TopLeft" HigherValueChanged="videoBitRangeSlider_HigherValueChanged" LowerValueChanged="videoBitRangeSlider_LowerValueChanged" Grid.Row="1" AutoToolTipPlacement="TopLeft" LowerThumbBackground="#FF8AD6EC" HigherThumbBackground="#FF8AD6EC" Template="{DynamicResource RangeSliderControlTemplate1}" Margin="5,0" HorizontalContentAlignment="Center" HigherValue="1" AutoToolTipPrecision="3" />
+                        </Grid>
+                    </Grid>
                 </Grid>
-            </Grid>
-        </Grid>
+            </TabItem>
+            <TabItem Header="" Width="0" Height="0" Margin="0" Padding="0" >
+                <Grid Background="#FFE5E5E5"/>
+            </TabItem>
+        </TabControl>
     </Grid>
 </Window>
