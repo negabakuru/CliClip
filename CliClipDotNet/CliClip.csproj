@@ -65,6 +65,7 @@
     <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
+    <Reference Include="PresentationFramework.Aero2" />
     <Reference Include="System" />
     <Reference Include="System.Buffers, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\CliClip\packages\System.Buffers.4.5.1\lib\net461\System.Buffers.dll</HintPath>
@@ -120,12 +121,19 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="ConversionProgressWindow.xaml.cs">
+      <DependentUpon>ConversionProgressWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="UpdateFFMpegWindow.xaml.cs">
       <DependentUpon>UpdateFFMpegWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="VideoBitItem.xaml.cs">
       <DependentUpon>VideoBitItem.xaml</DependentUpon>
     </Compile>
+    <Page Include="ConversionProgressWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

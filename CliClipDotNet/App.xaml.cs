@@ -25,7 +25,7 @@ namespace CliClip
         }
 
         static private string AppDataPath;
-        static private string TempPath;
+        static public string TempPath { get; protected set; }
         static private string SettingsFilePath;
         static public AppSettings Settings { get; set; }
         static public LibVLC VLC { get; protected set; }
