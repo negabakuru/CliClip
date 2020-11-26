@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Windows;
 using System.Collections.Generic;
-
-using System.Linq;
-using LibVLCSharp.Shared;
-using System.IO;
 using System.Collections.ObjectModel;
+using System.Linq;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Text;
+
 using Xabe.FFmpeg;
+using LibVLCSharp.Shared;
 
 namespace CliClip
 {
@@ -46,6 +47,8 @@ namespace CliClip
         double bitSeekStartTime = 0.0;
         double bitSeekEndTime = 0.0;
         double lastSeekTime = 0.0;
+        // Timer to actually update media player's position so it doesn't change too often
+        System.Windows.Forms.Timer setSeekTimeTimer = new System.Windows.Forms.Timer();
 
 
         // Window showing progress while rendering video
@@ -91,6 +94,8 @@ namespace CliClip
             audioTrackComboBox.ItemsSource = playingMediaAudioTracks;
             subtitleTrackComboBox.ItemsSource = playingMediaSubtitleTracks;
 
+            setSeekTimeTimer.Tick += UpdatePlayerSeekTime;
+            setSeekTimeTimer.Interval = 100;
         }
 
         private void resultVideoView_Loaded(object sender, RoutedEventArgs e)
@@ -347,8 +352,6 @@ namespace CliClip
                 // Save new value to set end time on drag completed
                 bitSeekEndTime = videoBitRangeSlider.HigherValue;
                 lastSeekTime = bitSeekEndTime;
-                // Seek to corresponding time
-                bitMediaPlayer.Time = Convert.ToInt64(videoBitRangeSlider.HigherValue * 1000.0);
             }
         }
 
@@ -359,9 +362,14 @@ namespace CliClip
                 // Save new value to set start time on drag completed
                 bitSeekStartTime = videoBitRangeSlider.LowerValue;
                 lastSeekTime = bitSeekStartTime;
-                // Seek to corresponding time
-                bitMediaPlayer.Time = Convert.ToInt64(videoBitRangeSlider.LowerValue * 1000.0);
             }
+        }
+
+        private void UpdatePlayerSeekTime(object sender, EventArgs e)
+        {
+            // Seek to corresponding time
+            if (bitMediaPlayer != null)
+                bitMediaPlayer.Time = Convert.ToInt64(lastSeekTime * 1000.0);
         }
 
         private void videoBitRangeSlider_DragStarted(object sender, System.Windows.Controls.Primitives.DragStartedEventArgs e)
@@ -370,6 +378,7 @@ namespace CliClip
             {
                 wasPlayingBeforeSeek = bitMediaPlayer.IsPlaying;
                 bitMediaPlayer.SetPause(true);
+                setSeekTimeTimer.Start();
             }
         }
 
@@ -377,6 +386,8 @@ namespace CliClip
         {
             if (bitMediaPlayer != null && playingMedia != null)
             {
+                setSeekTimeTimer.Stop();
+
                 playingMedia.AddOption("input-repeat=65535");
                 // Set vlc playback start time to lower value on range slide
                 playingMedia.AddOption($"start-time={bitSeekStartTime}");
@@ -387,7 +398,7 @@ namespace CliClip
                 //    mediaPlayer.SetPause(false);
                 bitMediaPlayer.Play(playingMedia);
 
-                bitMediaPlayer.Position = Convert.ToInt64(lastSeekTime * 1000.0);
+                bitMediaPlayer.Time = Convert.ToInt64(lastSeekTime * 1000.0);
 
                 wasPlayingBeforeSeek = false;
             }
@@ -411,7 +422,7 @@ namespace CliClip
             }
         }
 
-        async private void renderButton_Click(object sender, RoutedEventArgs e)
+        private void renderButton_Click(object sender, RoutedEventArgs e)
         {
             if (bitList.Count > 0)
                 RenderBits();
@@ -442,7 +453,8 @@ namespace CliClip
 
                     VideoBitItem bitItem = bitList[currentBitConversion];
 
-                    string outputFilename = currentBitConversion.ToString() + (Path.HasExtension(bitItem.mediaPath) ? Path.GetExtension(bitItem.mediaPath) : ".mp4");
+                    // convert to mp4 video in case subtitles need to be burned into video so we can apply effects like changing playback speed
+                    string outputFilename = $"{currentBitConversion.ToString()}.mp4";
                     string outputFilePath = Path.Combine(App.TempPath, "bits\\", outputFilename);
                     bitsOutputPathList.Add(outputFilePath);
 
@@ -450,7 +462,7 @@ namespace CliClip
                     IMediaInfo mediaInfo = await FFmpeg.GetMediaInfo(bitItem.mediaPath);
 
                     // Basic setup
-                    IStream videoStream = mediaInfo.VideoStreams.FirstOrDefault().ChangeSpeed(Convert.ToDouble(bitItem.rate));
+                    IVideoStream videoStream = mediaInfo.VideoStreams.FirstOrDefault();
                     IConversion conv = FFmpeg.Conversions.New()
                         .SetOutput(outputFilePath)
                         .SetOverwriteOutput(true)
@@ -462,44 +474,55 @@ namespace CliClip
                     {
                         foreach (var stream in mediaInfo.AudioStreams)
                         {
-                            if (stream.Language == bitItem.audioTrack?.Language)
-                            {
-                                stream.ChangeSpeed(Convert.ToDouble(bitItem.rate));
+                            if (stream.Index == bitItem.audioTrack?.Id)
                                 conv.AddStream(stream);
-                            }
                         }
                     }
 
                     // Set selected subtitle stream
                     foreach (var stream in mediaInfo.SubtitleStreams)
                     {
-                        if (stream.Language == bitItem.subtitleTrack?.Language)
+                        if (stream.Index == bitItem.subtitleTrack?.Id)
                             conv.AddStream(stream);
                     }
 
                     conv.OnProgress += OnConvertionProgress;
                     currentFfmpegCancelToken = new CancellationTokenSource();
                     await conv.Start(currentFfmpegCancelToken.Token);
+
+                    // Should apply additional effects after subtitles were burned into video
+                    if (bitItem.rate != 1.0M)
+                    {
+                        mediaInfo = await FFmpeg.GetMediaInfo(outputFilePath);
+                        outputFilename = $"{currentBitConversion.ToString()}_fx.mp4";
+                        outputFilePath = Path.Combine(App.TempPath, "bits\\", outputFilename);
+                        bitsOutputPathList[bitsOutputPathList.Count - 1] = outputFilePath;
+                        conv = FFmpeg.Conversions.New()
+                            .SetOutput(outputFilePath)
+                            .SetOverwriteOutput(true)
+                            .AddStream(mediaInfo.VideoStreams.First().ChangeSpeed(Convert.ToDouble(bitItem.rate)))
+                            .AddStream(mediaInfo.AudioStreams.FirstOrDefault().ChangeSpeed(Convert.ToDouble(bitItem.rate)));
+                        await conv.Start();
+                    }
                 }
 
-                // render the final temp file
+                // render the final temp file (keep the temp files just in case?)
                 if (bitsOutputPathList.Count > 1)
                 {
-                    var conv = await FFmpeg.Conversions.FromSnippet.Concatenate(Path.Combine(App.TempPath, "bits/", "final.mp4"), bitsOutputPathList.ToArray());
+                    // Concatenate all bits into one video
+                    StringBuilder concatFileListStr = new StringBuilder();
+                    foreach (string bit in bitsOutputPathList)
+                        concatFileListStr.AppendLine($"file \'{bit}\'");
+                    File.WriteAllText(Path.Combine(App.TempPath, "bits\\concatList.txt"), concatFileListStr.ToString());
+
+                    var conv = FFmpeg.Conversions.New();
                     conv.OnProgress += OnConvertionProgress;
-                    await conv.Start();
+                    await conv.Start($"-f concat -safe 0 -i {Path.Combine(App.TempPath, "bits/concatList.txt")} -c copy {Path.Combine(App.TempPath, "bits\\final.mp4")}");
                 }
                 else
                 {
-                    //var conv = await FFmpeg.Conversions.FromSnippet.Convert(bitsOutputPathList[0], Path.Combine(App.TempPath, "bits/", "final.mp4"));
-                    IMediaInfo mediaInfo = await FFmpeg.GetMediaInfo(bitsOutputPathList[0]);
-                    IConversion conv = FFmpeg.Conversions.New()
-                        .SetOutput(Path.Combine(App.TempPath, "bits/", "final.mp4"))
-                        .SetOverwriteOutput(true)
-                        .AddStream(mediaInfo.VideoStreams.FirstOrDefault())
-                        .AddStream(mediaInfo.AudioStreams.FirstOrDefault());
-                    conv.OnProgress += OnConvertionProgress;
-                    await conv.Start();
+                    // Single bit already rendered so we just copy the file
+                    File.Copy(bitsOutputPathList[0], Path.Combine(App.TempPath, "bits/", "final.mp4"), true);
                 }
 
                 ffmpegProgressWindow.Close();
@@ -507,6 +530,9 @@ namespace CliClip
 
                 // Switch to result tab
                 tabControl.SelectedIndex = 1;
+
+                // Wait for tab to switch so vlc window can initialize properly
+                await Task.Delay(1000);
 
                 resultMedia = new Media(App.VLC, Path.Combine(App.TempPath, "bits\\final.mp4"), FromType.FromPath);
                 resultMedia.AddOption("input-repeat=65535");
@@ -538,6 +564,11 @@ namespace CliClip
             }
             else
                 Directory.CreateDirectory(Path.Combine(App.TempPath, "bits/"));
+        }
+
+        private void saveResultButton_Click(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }

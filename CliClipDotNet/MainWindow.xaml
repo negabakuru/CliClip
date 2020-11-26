@@ -81,7 +81,7 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                        <Button x:Name="addBitButton" Content="Add selected bit" Grid.Row="3" Click="addBitButton_Click" Background="#FF99ACC3" Foreground="#FFF3F3F3"/>
+                        <Button x:Name="addBitButton" Content="Add selected bit" Grid.Row="3" Click="addBitButton_Click" Background="#FF99ACC3" Foreground="#FFF3F3F3" Margin="5,0,5,5"/>
                     </Grid>
                     <GridSplitter x:Name="gridSplitter" HorizontalAlignment="Stretch" Width="5" Grid.Column="1" Background="#FF6E6E6E"/>
                     <Grid x:Name="videoGrid" Grid.Column="2">
@@ -136,7 +136,10 @@
                         <ColumnDefinition Width="5"/>
                         <ColumnDefinition Width="4*"/>
                     </Grid.ColumnDefinitions>
-                    <Grid x:Name="resultSideGrid"/>
+                    <Grid x:Name="resultSideGrid">
+                        <Button x:Name="saveResultButton" Content="Save" HorizontalAlignment="Left" Margin="85,53,0,0" VerticalAlignment="Top" Width="75" Click="saveResultButton_Click"/>
+                        <Button x:Name="button1" Content="Back" HorizontalAlignment="Left" Margin="63,181,0,0" VerticalAlignment="Top" Width="75"/>
+                    </Grid>
                     <GridSplitter x:Name="gridSplitter1" HorizontalAlignment="Stretch" Width="0" Grid.ColumnSpan="2" Grid.Column="1"/>
                     <Grid x:Name="resultVideoGrid" Grid.Column="2">
                         <Grid.RowDefinitions>
