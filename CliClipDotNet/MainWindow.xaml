@@ -24,8 +24,10 @@
         </Grid.RowDefinitions>
         <StackPanel x:Name="toolbarPanel" VerticalAlignment="Top" Orientation="Horizontal" Background="#FF535353">
             <Menu x:Name="menu" Background="#FF535353" Foreground="Gainsboro">
-                <MenuItem Header="File" Foreground="Gainsboro" Template="{DynamicResource MenuItemControlTemplate1}" >
+                <MenuItem Header="Clip" Foreground="Gainsboro" Template="{DynamicResource MenuItemControlTemplate1}" Background="#FF535353" >
+                    <MenuItem Header="Reset Clip" Background="#FF535353" Click="newClip_Click"/>
                     <MenuItem Header="Open Video" Click="loadVideoButton_Click" Background="#FF535353" />
+                    <MenuItem Header="Export" Background="#FF535353" Click="exportClip_Click"/>
                     <MenuItem Header="Quit" Click="MenuItem_Click" Background="#FF535353" />
                 </MenuItem>
                 <MenuItem Header="Settings" Foreground="Gainsboro" Background="#FF535353" Template="{DynamicResource MenuItemControlTemplate1}">
@@ -53,6 +55,7 @@
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="40"/>
+                            <RowDefinition Height="40"/>
                             <RowDefinition/>
                             <RowDefinition Height="30"/>
                         </Grid.RowDefinitions>
@@ -66,8 +69,18 @@
                                 <TextBlock x:Name="framerateTextBlock" TextWrapping="Wrap" Text="0" Foreground="Gainsboro"/>
                             </StackPanel>
                         </ListBox>
-                        <Button x:Name="renderButton" Content="Render bits" Grid.Row="1" Background="#FF4DC573" Foreground="#FFF9F9F9" Click="renderButton_Click"/>
-                        <ItemsControl x:Name="bitItemsControl" Grid.Row="2">
+                        <Grid Margin="0,0,0,10" Grid.Row="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition/>
+                                <ColumnDefinition Width="3*"/>
+                                <ColumnDefinition/>
+                            </Grid.ColumnDefinitions>
+                            <Button x:Name="prevRenderItemButton" Content="Prev" Background="#FF646464" Foreground="Gainsboro" BorderBrush="{x:Null}" Visibility="Hidden" Click="prevRenderItemButton_Click"/>
+                            <Button x:Name="loadCurrentRenderedBitButton" Content="Load current render" Grid.Column="1" Background="#FF646464" Foreground="Gainsboro" BorderBrush="{x:Null}" Margin="10,0" Visibility="Hidden" Click="loadCurrentRenderedBitButton_Click"/>
+                            <Button x:Name="nextRenderItemButton" Content="Next" Grid.Column="2" Background="#FF646464" Foreground="Gainsboro" BorderBrush="{x:Null}" Visibility="Hidden" Click="nextRenderItemButton_Click"/>
+                        </Grid>
+                        <Button x:Name="renderButton" Content="Render bits" Grid.Row="2" Background="#FF4DC573" Foreground="#FFF9F9F9" Click="renderButton_Click"/>
+                        <ItemsControl x:Name="bitItemsControl" Grid.Row="3">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
                                     <StackPanel CanVerticallyScroll="True" ScrollViewer.VerticalScrollBarVisibility="Auto"/>
@@ -81,7 +94,7 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                        <Button x:Name="addBitButton" Content="Add selected bit" Grid.Row="3" Click="addBitButton_Click" Background="#FF99ACC3" Foreground="#FFF3F3F3" Margin="5,0,5,5"/>
+                        <Button x:Name="addBitButton" Content="Add selected bit" Grid.Row="5" Click="addBitButton_Click" Background="#FF99ACC3" Foreground="#FFF3F3F3" Margin="5,0,5,5"/>
                     </Grid>
                     <GridSplitter x:Name="gridSplitter" HorizontalAlignment="Stretch" Width="5" Grid.Column="1" Background="#FF6E6E6E"/>
                     <Grid x:Name="videoGrid" Grid.Column="2">
@@ -100,6 +113,7 @@
                                 <RowDefinition/>
                             </Grid.RowDefinitions>
                             <StackPanel Orientation="Horizontal">
+                                <Button x:Name="togglePauseButton" Content="▶" Background="#FF646464" Foreground="Gainsboro" BorderBrush="#FFACACAC" Margin="15,5,25,5" Padding="15,1" VerticalContentAlignment="Top" Click="togglePauseButton_Click"/>
                                 <TextBlock TextWrapping="Wrap" Text="Audio Track" Margin="3,0" VerticalAlignment="Center" Foreground="Gainsboro"/>
                                 <ComboBox x:Name="audioTrackComboBox" MinWidth="200" Margin="3,5" VerticalContentAlignment="Center" VerticalAlignment="Center" SelectionChanged="audioTrackComboBox_SelectionChanged" DisplayMemberPath="displayString" Foreground="Gainsboro" Style="{DynamicResource ComboBoxStyle1}">
                                     <ComboBox.Background>
@@ -123,8 +137,8 @@
                                 <TextBlock TextWrapping="Wrap" Text="Mute" Margin="9,0,3,0" VerticalAlignment="Center" Foreground="Gainsboro"/>
                                 <CheckBox x:Name="muteCheckBox" Content="" VerticalContentAlignment="Center" Click="muteCheckBox_Click" Margin="3,0" VerticalAlignment="Center" Background="#FF6C6C6C"/>
                             </StackPanel>
-                            <Slider x:Name="videoPlaybackSlider" Margin="0,-3,0,0" Background="#FF474747" BorderBrush="{x:Null}" Grid.Row="1" Maximum="1" SmallChange="0.01" Focusable="False" VerticalContentAlignment="Center" Style="{DynamicResource SliderStyle1}" HorizontalContentAlignment="Center" AutoToolTipPlacement="TopLeft" AutoToolTipPrecision="3"/>
-                            <xctk:RangeSlider Thumb.DragStarted="videoBitRangeSlider_DragStarted" Thumb.DragCompleted="videoBitRangeSlider_DragCompleted" x:Name="videoBitRangeSlider" VerticalContentAlignment="Center" Maximum="1" Step="0.01" RangeBackground="#330051FF" TickPlacement="TopLeft" HigherValueChanged="videoBitRangeSlider_HigherValueChanged" LowerValueChanged="videoBitRangeSlider_LowerValueChanged" Grid.Row="1" AutoToolTipPlacement="TopLeft" LowerThumbBackground="#FF8AD6EC" HigherThumbBackground="#FF8AD6EC" Template="{DynamicResource RangeSliderControlTemplate1}" Margin="5,0" HorizontalContentAlignment="Center" HigherValue="1" AutoToolTipPrecision="3" BorderBrush="#FF0061C1" />
+                            <Slider x:Name="videoPlaybackSlider" Margin="0,-3,0,0" Background="#FF474747" BorderBrush="{x:Null}" Grid.Row="1" Maximum="1" SmallChange="0.01" Focusable="False" VerticalContentAlignment="Center" Style="{DynamicResource SliderStyle1}" HorizontalContentAlignment="Center" AutoToolTipPlacement="TopLeft" AutoToolTipPrecision="3" Grid.ColumnSpan="2"/>
+                            <xctk:RangeSlider Thumb.DragStarted="videoBitRangeSlider_DragStarted" Thumb.DragCompleted="videoBitRangeSlider_DragCompleted" x:Name="videoBitRangeSlider" VerticalContentAlignment="Center" Maximum="1" Step="0.01" RangeBackground="#330051FF" TickPlacement="TopLeft" HigherValueChanged="videoBitRangeSlider_HigherValueChanged" LowerValueChanged="videoBitRangeSlider_LowerValueChanged" Grid.Row="1" AutoToolTipPlacement="TopLeft" LowerThumbBackground="#FF8AD6EC" HigherThumbBackground="#FF8AD6EC" Template="{DynamicResource RangeSliderControlTemplate1}" Margin="5,0" HorizontalContentAlignment="Center" HigherValue="1" AutoToolTipPrecision="3" BorderBrush="#FF0061C1" Grid.ColumnSpan="2" />
                         </Grid>
                     </Grid>
                 </Grid>
@@ -137,7 +151,7 @@
                         <ColumnDefinition Width="4*"/>
                     </Grid.ColumnDefinitions>
                     <Grid x:Name="resultSideGrid">
-                        <Button x:Name="saveResultButton" Content="Save" HorizontalAlignment="Left" Margin="85,53,0,0" VerticalAlignment="Top" Width="75" Click="saveResultButton_Click"/>
+                        <Button x:Name="saveResultButton" Content="Save" HorizontalAlignment="Left" Margin="85,53,0,0" VerticalAlignment="Top" Width="75"/>
                         <Button x:Name="button1" Content="Back" HorizontalAlignment="Left" Margin="63,181,0,0" VerticalAlignment="Top" Width="75"/>
                     </Grid>
                     <GridSplitter x:Name="gridSplitter1" HorizontalAlignment="Stretch" Width="0" Grid.ColumnSpan="2" Grid.Column="1"/>

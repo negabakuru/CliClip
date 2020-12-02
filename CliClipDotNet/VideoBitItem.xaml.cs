@@ -18,22 +18,21 @@ namespace CliClip
     {
         // List containing all VideoBitItem items
         ObservableCollection<VideoBitItem> bitList;
-        // Bit start time in seconds
-        public double startTime = 0.0;
+        public MediaBit bit = new MediaBit();
+
         public string startTimeString
         {
             get
             {
-                return new TimeSpan(0, 0, 0, 0, Convert.ToInt32(startTime * 1000.0)).ToString(@"hh\:mm\:ss\.fff");
+                return new TimeSpan(0, 0, 0, 0, Convert.ToInt32(bit.startTime * 1000.0)).ToString(@"hh\:mm\:ss\.fff");
             }
         }
-        // Bit end time in seconds
-        public double endTime = 0.0;
+
         public string endTimeString
         {
             get
             {
-                return new TimeSpan(0, 0, 0, 0, Convert.ToInt32(endTime * 1000.0)).ToString(@"hh\:mm\:ss\.fff");
+                return new TimeSpan(0, 0, 0, 0, Convert.ToInt32(bit.endTime * 1000.0)).ToString(@"hh\:mm\:ss\.fff");
             }
         }
         // String displaying [startTime - endTime]
@@ -41,18 +40,11 @@ namespace CliClip
         {
             get
             {
-                string startString = new TimeSpan(0, 0, 0, 0, Convert.ToInt32(startTime * 1000.0)).ToString(@"hh\:mm\:ss\.fff");
-                string endString = new TimeSpan(0, 0, 0, 0, Convert.ToInt32(endTime * 1000.0)).ToString(@"hh\:mm\:ss\.fff");
+                string startString = new TimeSpan(0, 0, 0, 0, Convert.ToInt32(bit.startTime * 1000.0)).ToString(@"hh\:mm\:ss\.fff");
+                string endString = new TimeSpan(0, 0, 0, 0, Convert.ToInt32(bit.endTime * 1000.0)).ToString(@"hh\:mm\:ss\.fff");
                 return $"[{startString} - {endString}]";
             }
         }
-        public string mediaPath;
-        //public Media media = null;
-        public MediaTrack? audioTrack;
-        public bool muted = false;
-        public MediaTrack? subtitleTrack;
-        public decimal rate = 1.0M;
-
 
 
         public VideoBitItem()
@@ -66,36 +58,29 @@ namespace CliClip
 
             // Init members
             bitList = list;
-            startTime = start;
-            endTime = end;
-            mediaPath = path;
-            //media = source.Duplicate();
-            rate = playrate;
-            audioTrack = audio;
-            muted = mute;
-            subtitleTrack = subtitles;
+            bit.startTime = start;
+            bit.endTime = end;
+            bit.mediaPath = path;
+            bit.rate = playrate;
+            bit.audioTrack = audio;
+            bit.muted = mute;
+            bit.subtitleTrack = subtitles;
 
             // Update UI
             UpdateUI();
         }
 
-        ~VideoBitItem()
-        {
-            //if (media != null)
-            //    media.Dispose();
-        }
-
         protected void UpdateUI()
         {
             expander.Header = timestampString;
-            playrateText.Text = rate.ToString();
-            mutedText.Text = muted.ToString();
-            if (audioTrack.HasValue)
-                audioTrackText.Text = $"{audioTrack.Value.Id} [{audioTrack.Value.Language}] {audioTrack.Value.Description}";
+            playrateText.Text = bit.rate.ToString();
+            mutedText.Text = bit.muted.ToString();
+            if (bit.audioTrack.HasValue)
+                audioTrackText.Text = $"{bit.audioTrack.Value.Id} [{bit.audioTrack.Value.Language}] {bit.audioTrack.Value.Description}";
             else
                 audioTrackText.Text = "None";
-            if (subtitleTrack.HasValue)
-                subtitleTrackText.Text = $"{subtitleTrack.Value.Id} [{subtitleTrack.Value.Language}] {subtitleTrack.Value.Description}";
+            if (bit.subtitleTrack.HasValue)
+                subtitleTrackText.Text = $"{bit.subtitleTrack.Value.Id} [{bit.subtitleTrack.Value.Language}] {bit.subtitleTrack.Value.Description}";
             else
                 subtitleTrackText.Text = "None";
         }

@@ -1,9 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows;
 
 using Newtonsoft.Json;
@@ -22,6 +17,9 @@ namespace CliClip
         {
             public bool autoUpdateFfmpeg;
             public string ffmpegDirectory;
+
+            public string lastOpenVideoPath;
+            public string lastExportPath;
         }
 
         static private string AppDataPath;
@@ -44,8 +42,8 @@ namespace CliClip
                 updateFFmpegWindow.ShowDialog();
             }
 
-            if (args.Length > 0 && mainWindow.LoadMediaFromPath(args[0]))
-                mainWindow.LoadNewVideo(mainWindow.baseMedia);
+            if (args.Length > 0)
+                mainWindow.LoadNewVideo(args[0]);
         }
 
         private void InitApp()
