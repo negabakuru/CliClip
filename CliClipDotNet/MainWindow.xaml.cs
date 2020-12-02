@@ -398,6 +398,13 @@ namespace CliClip
             if (bitMediaPlayer != null)
             {
                 wasPlayingBeforeSeek = bitMediaPlayer.IsPlaying;
+
+                // Reset start and end so we can seek the whole video
+                playingMedia.AddOption("input-repeat=65535");
+                playingMedia.AddOption($"start-time=0.0");
+                playingMedia.AddOption($"stop-time={videoBitRangeSlider.Maximum}");
+
+                //bitMediaPlayer.Play(playingMedia);
                 bitMediaPlayer.SetPause(true);
                 setSeekTimeTimer.Start();
             }
@@ -445,12 +452,12 @@ namespace CliClip
 
         private void SaveCurrentBitsRenderItem()
         {
-            bitsRenderItemList.Last().playingMediaPath = playingMediaPath;
-            bitsRenderItemList.Last().selectedAudio = (MediaTrackComboBoxItem)audioTrackComboBox.SelectedItem;
-            bitsRenderItemList.Last().selectedSubtitles = (MediaTrackComboBoxItem)subtitleTrackComboBox.SelectedItem;
-            bitsRenderItemList.Last().bitList.Clear();
+            bitsRenderItemList[currentBitsRenderItem].playingMediaPath = playingMediaPath;
+            bitsRenderItemList[currentBitsRenderItem].selectedAudio = (MediaTrackComboBoxItem)audioTrackComboBox.SelectedItem;
+            bitsRenderItemList[currentBitsRenderItem].selectedSubtitles = (MediaTrackComboBoxItem)subtitleTrackComboBox.SelectedItem;
+            bitsRenderItemList[currentBitsRenderItem].bitList.Clear();
             foreach (VideoBitItem bitItem in bitList)
-                bitsRenderItemList.Last().bitList.Add(new MediaBit
+                bitsRenderItemList[currentBitsRenderItem].bitList.Add(new MediaBit
                 {
                     mediaPath = bitItem.bit.mediaPath,
                     startTime = bitItem.bit.startTime,
@@ -562,17 +569,16 @@ namespace CliClip
                     await FFmpeg.Conversions.New()
                     .SetOverwriteOutput(true)
                     .AddStream(stream)
-                    .SetOutput(Path.ChangeExtension(outputFilePath, ".srt"))
+                    .SetOutput(Path.ChangeExtension(outputFilePath, ".ass"))
                     .Start();
                     subtitleExtracted = true;
                 }
             }
 
-            // Basic setup
+            // Set up bit rendering
             IVideoStream videoStream = mediaInfo.VideoStreams.FirstOrDefault();
-            // TODO handle subtitles scaling
             if (subtitleExtracted) // burn extracted subtitles into video
-                videoStream.AddSubtitles(Path.ChangeExtension(outputFilePath, ".srt"));
+                videoStream.AddSubtitles(Path.ChangeExtension(outputFilePath, ".ass"), GetClosestVideoSize(videoStream.Width, videoStream.Height));
             IConversion conv = FFmpeg.Conversions.New()
                 .SetOutput(outputFilePath)
                 .SetOverwriteOutput(true)
@@ -589,6 +595,7 @@ namespace CliClip
                 }
             }
 
+            // begin rendering
             conv.OnProgress += OnConvertionProgress;
             currentFfmpegCancelToken = new CancellationTokenSource();
             await conv.Start(currentFfmpegCancelToken.Token);
@@ -598,6 +605,7 @@ namespace CliClip
 
             ++currentConversionStep;
             ffmpegProgressWindow.statusText.Text = $"Rendering [{currentConversionStep}/{totalConversionSteps}]";
+
             // Should apply additional effects after subtitles were burned into video
             if (bitItem.bit.rate != 1.0M)
             {
@@ -620,6 +628,280 @@ namespace CliClip
                 currentFfmpegCancelToken.Dispose();
                 currentFfmpegCancelToken = null;
             }
+        }
+
+        static public VideoSize GetClosestVideoSize(int width, int height)
+        {
+            VideoSize closestSize = VideoSize.Hd1080;
+            int smallestDelta = 999999;
+
+            if (Math.Abs(width - 720) + Math.Abs(height - 480) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 720) + Math.Abs(height - 480);
+                closestSize = VideoSize.Ntsc;
+            }
+            if (Math.Abs(width - 720) + Math.Abs(height - 576) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 720) + Math.Abs(height - 576);
+                closestSize = VideoSize.Pal;
+            }
+            if (Math.Abs(width - 352) + Math.Abs(height - 240) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 352) + Math.Abs(height - 240);
+                closestSize = VideoSize.Qntsc;
+            }
+            if (Math.Abs(width - 352) + Math.Abs(height - 288) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 352) + Math.Abs(height - 288);
+                closestSize = VideoSize.Qpal;
+            }
+            if (Math.Abs(width - 640) + Math.Abs(height - 480) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 640) + Math.Abs(height - 480);
+                closestSize = VideoSize.Sntsc;
+            }
+            if (Math.Abs(width - 768) + Math.Abs(height - 576) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 768) + Math.Abs(height - 576);
+                closestSize = VideoSize.Spal;
+            }
+            if (Math.Abs(width - 352) + Math.Abs(height - 240) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 352) + Math.Abs(height - 240);
+                closestSize = VideoSize.Film;
+            }
+            if (Math.Abs(width - 352) + Math.Abs(height - 240) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 352) + Math.Abs(height - 240);
+                closestSize = VideoSize.NtscFilm;
+            }
+            if (Math.Abs(width - 128) + Math.Abs(height - 96) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 128) + Math.Abs(height - 96);
+                closestSize = VideoSize.Sqcif;
+            }
+            if (Math.Abs(width - 176) + Math.Abs(height - 144) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 176) + Math.Abs(height - 144);
+                closestSize = VideoSize.Qcif;
+            }
+            if (Math.Abs(width - 352) + Math.Abs(height - 288) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 352) + Math.Abs(height - 288);
+                closestSize = VideoSize.Cif;
+            }
+            if (Math.Abs(width - 704) + Math.Abs(height - 576) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 704) + Math.Abs(height - 576);
+                closestSize = VideoSize._4Cif;
+            }
+            if (Math.Abs(width - 1408) + Math.Abs(height - 1152) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 1408) + Math.Abs(height - 1152);
+                closestSize = VideoSize._16cif;
+            }
+            if (Math.Abs(width - 160) + Math.Abs(height - 120) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 160) + Math.Abs(height - 120);
+                closestSize = VideoSize.Qqvga;
+            }
+            if (Math.Abs(width - 320) + Math.Abs(height - 240) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 320) + Math.Abs(height - 240);
+                closestSize = VideoSize.Qvga;
+            }
+            if (Math.Abs(width - 640) + Math.Abs(height - 480) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 640) + Math.Abs(height - 480);
+                closestSize = VideoSize.Vga;
+            }
+            if (Math.Abs(width - 800) + Math.Abs(height - 600) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 800) + Math.Abs(height - 600);
+                closestSize = VideoSize.Svga;
+            }
+            if (Math.Abs(width - 1024) + Math.Abs(height - 768) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 1024) + Math.Abs(height - 768);
+                closestSize = VideoSize.Xga;
+            }
+            if (Math.Abs(width - 1600) + Math.Abs(height - 1200) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 1600) + Math.Abs(height - 1200);
+                closestSize = VideoSize.Uxga;
+            }
+            if (Math.Abs(width - 2048) + Math.Abs(height - 1536) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 2048) + Math.Abs(height - 1536);
+                closestSize = VideoSize.Qxga;
+            }
+            if (Math.Abs(width - 1280) + Math.Abs(height - 1024) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 1280) + Math.Abs(height - 1024);
+                closestSize = VideoSize.Sxga;
+            }
+            if (Math.Abs(width - 2560) + Math.Abs(height - 2048) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 2560) + Math.Abs(height - 2048);
+                closestSize = VideoSize.Qsxga;
+            }
+            if (Math.Abs(width - 5120) + Math.Abs(height - 4096) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 5120) + Math.Abs(height - 4096);
+                closestSize = VideoSize.Hsxga;
+            }
+            if (Math.Abs(width - 852) + Math.Abs(height - 480) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 852) + Math.Abs(height - 480);
+                closestSize = VideoSize.Wvga;
+            }
+            if (Math.Abs(width - 1366) + Math.Abs(height - 768) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 1366) + Math.Abs(height - 768);
+                closestSize = VideoSize.Wxga;
+            }
+            if (Math.Abs(width - 1600) + Math.Abs(height - 1024) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 1600) + Math.Abs(height - 1024);
+                closestSize = VideoSize.Wsxga;
+            }
+            if (Math.Abs(width - 1920) + Math.Abs(height - 1200) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 1920) + Math.Abs(height - 1200);
+                closestSize = VideoSize.Wuxga;
+            }
+            if (Math.Abs(width - 2560) + Math.Abs(height - 1600) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 2560) + Math.Abs(height - 1600);
+                closestSize = VideoSize.Woxga;
+            }
+            if (Math.Abs(width - 3200) + Math.Abs(height - 2048) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 3200) + Math.Abs(height - 2048);
+                closestSize = VideoSize.Wqsxga;
+            }
+            if (Math.Abs(width - 3840) + Math.Abs(height - 2400) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 3840) + Math.Abs(height - 2400);
+                closestSize = VideoSize.Wquxga;
+            }
+            if (Math.Abs(width - 6400) + Math.Abs(height - 4096) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 6400) + Math.Abs(height - 4096);
+                closestSize = VideoSize.Whsxga;
+            }
+            if (Math.Abs(width - 7680) + Math.Abs(height - 4800) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 7680) + Math.Abs(height - 4800);
+                closestSize = VideoSize.Whuxga;
+            }
+            if (Math.Abs(width - 320) + Math.Abs(height - 200) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 320) + Math.Abs(height - 200);
+                closestSize = VideoSize.Cga;
+            }
+            if (Math.Abs(width - 640) + Math.Abs(height - 350) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 640) + Math.Abs(height - 350);
+                closestSize = VideoSize.Ega;
+            }
+            if (Math.Abs(width - 852) + Math.Abs(height - 480) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 852) + Math.Abs(height - 480);
+                closestSize = VideoSize.Hd480;
+            }
+            if (Math.Abs(width - 1280) + Math.Abs(height - 720) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 1280) + Math.Abs(height - 720);
+                closestSize = VideoSize.Hd720;
+            }
+            if (Math.Abs(width - 1920) + Math.Abs(height - 1080) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 1920) + Math.Abs(height - 1080);
+                closestSize = VideoSize.Hd1080;
+            }
+            if (Math.Abs(width - 2048) + Math.Abs(height - 1080) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 2048) + Math.Abs(height - 1080);
+                closestSize = VideoSize._2K;
+            }
+            if (Math.Abs(width - 1998) + Math.Abs(height - 1080) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 1998) + Math.Abs(height - 1080);
+                closestSize = VideoSize._2Kflat;
+            }
+            if (Math.Abs(width - 2048) + Math.Abs(height - 858) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 2048) + Math.Abs(height - 858);
+                closestSize = VideoSize._2Kscope;
+            }
+            if (Math.Abs(width - 4096) + Math.Abs(height - 2160) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 4096) + Math.Abs(height - 2160);
+                closestSize = VideoSize._4K;
+            }
+            if (Math.Abs(width - 3996) + Math.Abs(height - 2160) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 3996) + Math.Abs(height - 2160);
+                closestSize = VideoSize._4Kflat;
+            }
+            if (Math.Abs(width - 4096) + Math.Abs(height - 1716) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 4096) + Math.Abs(height - 1716);
+                closestSize = VideoSize._4Kscope;
+            }
+            if (Math.Abs(width - 640) + Math.Abs(height - 360) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 640) + Math.Abs(height - 360);
+                closestSize = VideoSize.Nhd;
+            }
+            if (Math.Abs(width - 240) + Math.Abs(height - 160) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 240) + Math.Abs(height - 160);
+                closestSize = VideoSize.Hqvga;
+            }
+            if (Math.Abs(width - 400) + Math.Abs(height - 240) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 400) + Math.Abs(height - 240);
+                closestSize = VideoSize.Wqvga;
+            }
+            if (Math.Abs(width - 432) + Math.Abs(height - 240) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 432) + Math.Abs(height - 240);
+                closestSize = VideoSize.Fwqvga;
+            }
+            if (Math.Abs(width - 480) + Math.Abs(height - 320) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 480) + Math.Abs(height - 320);
+                closestSize = VideoSize.Hvga;
+            }
+            if (Math.Abs(width - 960) + Math.Abs(height - 540) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 960) + Math.Abs(height - 540);
+                closestSize = VideoSize.Qhd;
+            }
+            if (Math.Abs(width - 2048) + Math.Abs(height - 1080) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 2048) + Math.Abs(height - 1080);
+                closestSize = VideoSize._2Kdci;
+            }
+            if (Math.Abs(width - 4096) + Math.Abs(height - 2160) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 4096) + Math.Abs(height - 2160);
+                closestSize = VideoSize._4Kdci;
+            }
+            if (Math.Abs(width - 3840) + Math.Abs(height - 2160) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 3840) + Math.Abs(height - 2160);
+                closestSize = VideoSize.Uhd2160;
+            }
+            if (Math.Abs(width - 7680) + Math.Abs(height - 4320) < smallestDelta)
+            {
+                smallestDelta = Math.Abs(width - 7680) + Math.Abs(height - 4320);
+                closestSize = VideoSize.Uhd4320;
+            }
+
+            return closestSize;
         }
 
         private void OnConvertionProgress(object sender, Xabe.FFmpeg.Events.ConversionProgressEventArgs args)
@@ -785,15 +1067,15 @@ namespace CliClip
                 bitSeekStartTime = 0.0;
                 bitSeekEndTime = 0.0;
 
-                if (currentBitsRenderItem > 0 && File.Exists(Path.Combine(App.TempPath, "renders/", $"{currentBitsRenderItem}.mp4")))
-                    LoadNewVideo(Path.Combine(App.TempPath, "renders/", $"{currentBitsRenderItem}.mp4"));
-                else
-                    LoadNewVideo(bitsRenderItemList[currentBitsRenderItem].playingMediaPath);
-
                 // Update bit list
                 bitList.Clear();
                 foreach (var bit in renderItem.bitList)
                     bitList.Add(new VideoBitItem(bitList, bit.mediaPath, bit.startTime, bit.endTime, bit.rate, bit.audioTrack, bit.muted, bit.subtitleTrack));
+
+                if (currentBitsRenderItem > 0 && File.Exists(Path.Combine(App.TempPath, "renders/", $"{currentBitsRenderItem}.mp4")))
+                    LoadNewVideo(Path.Combine(App.TempPath, "renders/", $"{currentBitsRenderItem}.mp4"));
+                else
+                    LoadNewVideo(bitsRenderItemList[currentBitsRenderItem].playingMediaPath);
 
                 // Set selected audio track
                 foreach (var audioTrack in playingMediaAudioTracks)
@@ -839,6 +1121,36 @@ namespace CliClip
                     bitMediaPlayer.SetPause(true);
                 else
                     bitMediaPlayer.SetPause(false);
+            }
+        }
+
+        private void videoPlaybackSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            lastSeekTime = videoPlaybackSlider.Value;
+        }
+
+        private void videoPlaybackSlider_DragStarted(object sender, System.Windows.Controls.Primitives.DragStartedEventArgs e)
+        {
+            if (bitMediaPlayer != null)
+            {
+                wasPlayingBeforeSeek = bitMediaPlayer.IsPlaying;
+                bitMediaPlayer.SetPause(true);
+                setSeekTimeTimer.Start();
+            }
+        }
+
+        private void videoPlaybackSlider_DragCompleted(object sender, System.Windows.Controls.Primitives.DragCompletedEventArgs e)
+        {
+            if (bitMediaPlayer != null && playingMedia != null)
+            {
+                setSeekTimeTimer.Stop();
+
+                bitMediaPlayer.Time = Convert.ToInt64(lastSeekTime * 1000.0);
+
+                if (wasPlayingBeforeSeek)
+                    bitMediaPlayer.SetPause(false);
+
+                wasPlayingBeforeSeek = false;
             }
         }
     }
