@@ -11,7 +11,7 @@
             <ColumnDefinition/>
             <ColumnDefinition Width="20"/>
         </Grid.ColumnDefinitions>
-        <Expander x:Name="expander" Header="Expander" VerticalAlignment="Top" Margin="0" Grid.ColumnSpan="2" Foreground="Gainsboro">
+        <Expander x:Name="Expander" Header="Expander" VerticalAlignment="Top" Margin="0" Grid.ColumnSpan="2" Foreground="Gainsboro">
             <Grid>
                 <StackPanel>
                     <StackPanel Orientation="Horizontal">
@@ -33,6 +33,6 @@
                 </StackPanel>
             </Grid>
         </Expander>
-        <Button x:Name="button" Content="X" HorizontalAlignment="Right" VerticalAlignment="Top" HorizontalContentAlignment="Center" Click="button_Click" MinWidth="20" Margin="0" Grid.Column="1" Foreground="Gainsboro" Background="#FF646464"/>
+        <Button x:Name="Button" Content="X" HorizontalAlignment="Right" VerticalAlignment="Top" HorizontalContentAlignment="Center" Click="Button_Click" MinWidth="20" Margin="0" Grid.Column="1" Foreground="Gainsboro" Background="#FF646464"/>
     </Grid>
 </UserControl>

@@ -1,13 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-
-using LibVLCSharp.Shared;
 using System.Collections.ObjectModel;
+
+using Xabe.FFmpeg;
 
 namespace CliClip
 {
@@ -17,31 +13,31 @@ namespace CliClip
     public partial class VideoBitItem : UserControl
     {
         // List containing all VideoBitItem items
-        ObservableCollection<VideoBitItem> bitList;
+        readonly ObservableCollection<VideoBitItem> bitList;
         public MediaBit bit = new MediaBit();
 
-        public string startTimeString
+        public string StartTimeString
         {
             get
             {
-                return new TimeSpan(0, 0, 0, 0, Convert.ToInt32(bit.startTime * 1000.0)).ToString(@"hh\:mm\:ss\.fff");
+                return bit.startTime.ToString(@"hh\:mm\:ss\.fff");
             }
         }
 
-        public string endTimeString
+        public string EndTimeString
         {
             get
             {
-                return new TimeSpan(0, 0, 0, 0, Convert.ToInt32(bit.endTime * 1000.0)).ToString(@"hh\:mm\:ss\.fff");
+                return bit.endTime.ToString(@"hh\:mm\:ss\.fff");
             }
         }
         // String displaying [startTime - endTime]
-        public string timestampString
+        public string TimestampString
         {
             get
             {
-                string startString = new TimeSpan(0, 0, 0, 0, Convert.ToInt32(bit.startTime * 1000.0)).ToString(@"hh\:mm\:ss\.fff");
-                string endString = new TimeSpan(0, 0, 0, 0, Convert.ToInt32(bit.endTime * 1000.0)).ToString(@"hh\:mm\:ss\.fff");
+                string startString = bit.startTime.ToString(@"hh\:mm\:ss\.fff");
+                string endString = bit.endTime.ToString(@"hh\:mm\:ss\.fff");
                 return $"[{startString} - {endString}]";
             }
         }
@@ -52,7 +48,7 @@ namespace CliClip
             InitializeComponent();
         }
 
-        public VideoBitItem(ObservableCollection<VideoBitItem> list, string path, double start, double end, decimal playrate, MediaTrack? audio, bool mute, MediaTrack? subtitles)
+        public VideoBitItem(ObservableCollection<VideoBitItem> list, string path, TimeSpan start, TimeSpan end, decimal playrate, IAudioStream audio, bool mute, ISubtitleStream subtitles)
         {
             InitializeComponent();
 
@@ -72,20 +68,20 @@ namespace CliClip
 
         protected void UpdateUI()
         {
-            expander.Header = timestampString;
+            Expander.Header = TimestampString;
             playrateText.Text = bit.rate.ToString();
             mutedText.Text = bit.muted.ToString();
-            if (bit.audioTrack.HasValue)
-                audioTrackText.Text = $"{bit.audioTrack.Value.Id} [{bit.audioTrack.Value.Language}] {bit.audioTrack.Value.Description}";
+            if (bit.audioTrack != null)
+                audioTrackText.Text = $"{bit.audioTrack.Index} [{bit.audioTrack.Language}]";
             else
                 audioTrackText.Text = "None";
-            if (bit.subtitleTrack.HasValue)
-                subtitleTrackText.Text = $"{bit.subtitleTrack.Value.Id} [{bit.subtitleTrack.Value.Language}] {bit.subtitleTrack.Value.Description}";
+            if (bit.subtitleTrack != null)
+                subtitleTrackText.Text = $"{bit.subtitleTrack.Index} [{bit.subtitleTrack.Language}] {bit.subtitleTrack.Title}";
             else
                 subtitleTrackText.Text = "None";
         }
 
-        private void button_Click(object sender, RoutedEventArgs e)
+        private void Button_Click(object sender, RoutedEventArgs e)
         {
             if (bitList != null)
                 bitList.Remove(this);

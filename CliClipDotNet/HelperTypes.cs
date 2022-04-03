@@ -1,13 +1,16 @@
-﻿using System.Collections.Generic;
-using LibVLCSharp.Shared;
+﻿using System;
+using System.Collections.Generic;
+
+using Xabe.FFmpeg;
 
 namespace CliClip
 {
     public class MediaTrackComboBoxItem
     {
-        public string displayString { get; set; }
-        public bool isNull { get; set; }
-        public MediaTrack track { get; set; }
+        public int Index { get; set; }
+        public string DisplayString { get; set; }
+        public bool IsNull { get; set; }
+        public IStream Track { get; set; }
     }
 
     public class MediaBit
@@ -15,14 +18,14 @@ namespace CliClip
         public string mediaPath;
 
         // Bit start time in seconds
-        public double startTime = 0.0;
+        public TimeSpan startTime;
         // Bit end time in seconds
-        public double endTime = 0.0;
+        public TimeSpan endTime;
 
-        public MediaTrack? audioTrack;
+        public IAudioStream audioTrack;
         public bool muted = false;
 
-        public MediaTrack? subtitleTrack;
+        public ISubtitleStream subtitleTrack;
 
         public decimal rate = 1.0M;
     }
